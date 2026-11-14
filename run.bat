@@ -1,0 +1,3 @@
+@echo off
+echo Uruchamianie Quillfolio (Windows Edition)...
+dotnet run --project Quillfolio.WPF\Quillfolio.WPF.csproj

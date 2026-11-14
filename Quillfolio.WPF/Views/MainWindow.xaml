@@ -1,0 +1,1157 @@
+<Window x:Class="Quillfolio.WPF.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:controls="clr-namespace:Quillfolio.WPF.Controls"
+        xmlns:svc="clr-namespace:Quillfolio.WPF.Services"
+        mc:Ignorable="d"
+        Title="Quillfolio"
+        Icon="pack://application:,,,/Assets/app_icon.ico"
+        Width="1380" Height="880"
+        MinWidth="980" MinHeight="640"
+        WindowStartupLocation="CenterScreen"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True"
+        TextOptions.TextFormattingMode="Display"
+        TextOptions.TextRenderingMode="ClearType"
+        RenderOptions.BitmapScalingMode="HighQuality"
+        Background="{DynamicResource DeskBackgroundBrush}">
+
+    <Grid Background="{DynamicResource DeskBackgroundBrush}">
+        <!-- ================================================================ -->
+        <!-- LAYER 0: WORKSPACE (FLOATING SIDEBAR + INFINITE CANVAS DESK)      -->
+        <!-- ================================================================ -->
+        <Grid Panel.ZIndex="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="SidebarColumn" Width="296" MinWidth="0" MaxWidth="420" />
+                <ColumnDefinition x:Name="SplitterColumn" Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <!-- FLOATING GLASS SIDEBAR DRAWER -->
+            <Border x:Name="SidebarPanel"
+                    Grid.Column="0"
+                    Style="{StaticResource FloatingIslandStyle}"
+                    Margin="14,88,2,14"
+                    CornerRadius="16"
+                    Padding="0">
+                <Border.RenderTransform>
+                    <TransformGroup>
+                        <ScaleTransform x:Name="SidebarScale" ScaleX="1" ScaleY="1" />
+                        <TranslateTransform x:Name="SidebarTranslate" X="0" Y="0" />
+                    </TransformGroup>
+                </Border.RenderTransform>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <!-- Primary Action: New Note -->
+                    <Border Grid.Row="0" Padding="14,14,14,10">
+                        <Button x:Name="BtnNewNote"
+                                Content="+ Nowa notatka"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Height="38"
+                                FontSize="13"
+                                Click="BtnNewNote_Click" />
+                    </Border>
+
+                    <!-- Folders & Favorites Tab Switcher + Explorer Card -->
+                    <StackPanel Grid.Row="1">
+                        <Border Margin="14,0,14,10"
+                                Padding="3"
+                                Background="{DynamicResource PillTrackBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="10">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <RadioButton x:Name="BtnTabFolders"
+                                             Grid.Column="0"
+                                             Content="Foldery"
+                                             IsChecked="True"
+                                             Checked="SidebarTab_Changed"
+                                             Style="{StaticResource ToolButtonStyle}"
+                                             HorizontalContentAlignment="Center"
+                                             Padding="6,5"
+                                             FontSize="12" />
+                                <RadioButton x:Name="BtnTabFavorites"
+                                             Grid.Column="1"
+                                             Content="★ Ulubione"
+                                             Checked="SidebarTab_Changed"
+                                             Style="{StaticResource ToolButtonStyle}"
+                                             HorizontalContentAlignment="Center"
+                                             Padding="6,5"
+                                             FontSize="12" />
+                            </Grid>
+                        </Border>
+
+                        <Border x:Name="FoldersExplorerCard"
+                                Margin="14,0,14,10"
+                                Padding="10,8"
+                                Background="{DynamicResource PillTrackBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
+                                BorderThickness="1"
+                                CornerRadius="12">
+                            <StackPanel>
+                                <DockPanel Margin="2,0,2,6">
+                                    <TextBlock x:Name="LblFoldersHeader"
+                                               Text="FOLDERY"
+                                               FontSize="10.5"
+                                               FontWeight="Bold"
+                                               Foreground="{DynamicResource TextSecondaryBrush}"
+                                               VerticalAlignment="Center" />
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button x:Name="BtnToggleExpandAll"
+                                                Content="▾"
+                                                Padding="6,2"
+                                                FontSize="10.5"
+                                                Margin="0,0,4,0"
+                                                Style="{StaticResource OutlineButtonStyle}"
+                                                Click="BtnToggleExpandAll_Click"
+                                                ToolTip="{Binding [ToggleExpandAllTip], Source={x:Static svc:Loc.Instance}}" />
+                                        <Button x:Name="BtnAddCategory"
+                                                Content="+ Folder"
+                                                Padding="7,2"
+                                                FontSize="10.5"
+                                                Margin="0,0,4,0"
+                                                Style="{StaticResource OutlineButtonStyle}"
+                                                Click="BtnAddCategory_Click"
+                                                ToolTip="Dodaj folder" />
+                                        <Button x:Name="BtnAddSubcategory"
+                                                Content="+ Podfolder"
+                                                Padding="7,2"
+                                                FontSize="10.5"
+                                                Style="{StaticResource OutlineButtonStyle}"
+                                                Click="BtnAddSubcategory_Click"
+                                                ToolTip="Dodaj podfolder" />
+                                    </StackPanel>
+                                </DockPanel>
+
+                                <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                                    <StackPanel x:Name="FoldersTreePanel" />
+                                </ScrollViewer>
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+
+                    <!-- Search Pill -->
+                    <Border Grid.Row="2"
+                            Margin="14,0,14,10"
+                            Background="{DynamicResource CardBackgroundBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="10"
+                            Padding="10,6">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Path Grid.Column="0"
+                                  Width="13" Height="13" Stretch="Uniform"
+                                  Fill="{DynamicResource TextSecondaryBrush}"
+                                  VerticalAlignment="Center"
+                                  Margin="0,0,8,0"
+                                  Data="M15.5,14h-.79l-.28-.27A6.471,6.471,0,0,0,16,9.5,6.5,6.5,0,1,0,9.5,16c1.61,0,3.09-.59,4.23-1.57l.27.28v.79l5,4.99L20.49,19Zm-6,0C7.01,14,5,11.99,5,9.5S7.01,5,9.5,5,14,7.01,14,9.5,11.99,14,9.5,14Z" />
+                            <Grid Grid.Column="1">
+                                <TextBox x:Name="TxtSearchNotes"
+                                         BorderThickness="0"
+                                         Background="Transparent"
+                                         FontSize="12.5"
+                                         Foreground="{DynamicResource TextPrimaryBrush}"
+                                         VerticalContentAlignment="Center"
+                                         TextChanged="TxtSearchNotes_TextChanged" />
+                                <TextBlock x:Name="TxtSearchPlaceholder"
+                                           Text="Szukaj notatek..."
+                                           Foreground="{DynamicResource TextSecondaryBrush}"
+                                           FontSize="12.5"
+                                           IsHitTestVisible="False"
+                                           VerticalAlignment="Center"
+                                           Margin="2,0,0,0" />
+                            </Grid>
+                        </Grid>
+                    </Border>
+
+                    <!-- Active Folder Breadcrumb / Scope Bar -->
+                    <Border x:Name="ActiveScopeBar"
+                            Grid.Row="3"
+                            Margin="14,0,14,6"
+                            Padding="10,5"
+                            Background="{DynamicResource PillTrackBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="9">
+                        <DockPanel>
+                            <Border DockPanel.Dock="Right"
+                                    Background="{DynamicResource SelectionTintBrush}"
+                                    CornerRadius="6"
+                                    Padding="6,1"
+                                    VerticalAlignment="Center">
+                                <TextBlock x:Name="TxtScopeNoteCount"
+                                           Text="0"
+                                           FontSize="10.5"
+                                           FontWeight="Bold"
+                                           Foreground="{DynamicResource PrimaryBrush}" />
+                            </Border>
+                            <StackPanel x:Name="BreadcrumbPanel"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center" />
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Modern Note Cards List -->
+                    <ListBox x:Name="ListNotes"
+                             Grid.Row="4"
+                             BorderThickness="0"
+                             Background="Transparent"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.CanContentScroll="False"
+                             SelectionChanged="ListNotes_SelectionChanged"
+                             PreviewMouseLeftButtonDown="ListNotes_PreviewMouseLeftButtonDown"
+                             PreviewMouseMove="ListNotes_PreviewMouseMove"
+                             Padding="10,2,10,12">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Margin" Value="0,3" />
+                                <Setter Property="Padding" Value="0" />
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="Card"
+                                                    Background="{DynamicResource CardBackgroundBrush}"
+                                                    BorderBrush="{DynamicResource BorderBrush}"
+                                                    BorderThickness="1"
+                                                    CornerRadius="12"
+                                                    Padding="12,10"
+                                                    Cursor="Hand">
+                                                <Grid>
+                                                    <Border x:Name="AccentPill"
+                                                            Width="3.5"
+                                                            HorizontalAlignment="Left"
+                                                            Margin="-6,2,0,2"
+                                                            CornerRadius="2"
+                                                            Background="Transparent" />
+                                                    <ContentPresenter />
+                                                </Grid>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Card" Property="Background" Value="{DynamicResource HoverSurfaceBrush}" />
+                                                    <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="Card" Property="Background" Value="{DynamicResource SelectionTintBrush}" />
+                                                    <Setter TargetName="Card" Property="BorderBrush" Value="{DynamicResource ActiveBorderBrush}" />
+                                                    <Setter TargetName="AccentPill" Property="Background" Value="{DynamicResource PrimaryBrush}" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="4,0,0,0" Background="Transparent">
+                                    <Grid.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="{Binding [FavoritesTab], Source={x:Static svc:Loc.Instance}}" Click="MenuNoteToggleFavorite_Click" Tag="{Binding}" />
+                                            <MenuItem Header="{Binding [Rename], Source={x:Static svc:Loc.Instance}}" Click="BtnRenameNote_Click" Tag="{Binding}" />
+                                            <MenuItem Header="{Binding [MoveNoteTip], Source={x:Static svc:Loc.Instance}}" Click="BtnMoveNote_Click" Tag="{Binding}" />
+                                            <Separator />
+                                            <MenuItem Header="{Binding [DeleteTip], Source={x:Static svc:Loc.Instance}}" Foreground="#DC2626" Click="BtnDeleteNote_Click" Tag="{Binding}" />
+                                        </ContextMenu>
+                                    </Grid.ContextMenu>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Button Grid.Column="0" Click="BtnToggleFavorite_Click" Tag="{Binding}" Background="Transparent" BorderThickness="0" Padding="2,4,6,4" Cursor="Hand" VerticalAlignment="Center" ToolTip="{Binding [ToggleFavoriteTip], Source={x:Static svc:Loc.Instance}}">
+                                        <TextBlock FontSize="14" VerticalAlignment="Center">
+                                            <TextBlock.Style>
+                                                <Style TargetType="TextBlock">
+                                                    <Setter Property="Text" Value="☆" />
+                                                    <Setter Property="Foreground" Value="#94A3B8" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                            <Setter Property="Text" Value="★" />
+                                                            <Setter Property="Foreground" Value="#F59E0B" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
+                                    </Button>
+                                    <StackPanel Grid.Column="1">
+                                        <TextBlock Text="{Binding Title}"
+                                                   FontWeight="SemiBold"
+                                                   FontSize="13.5"
+                                                   Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                            <Border Background="{DynamicResource PillTrackBrush}"
+                                                    CornerRadius="6"
+                                                    Padding="7,2"
+                                                    Margin="0,0,6,0">
+                                                <TextBlock Text="{Binding PageCountDisplay}"
+                                                           FontSize="10.5"
+                                                           FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource PrimaryBrush}" />
+                                            </Border>
+                                            <TextBlock Text="{Binding UpdatedAtDisplay}"
+                                                       FontSize="10.5"
+                                                       Foreground="{DynamicResource TextSecondaryBrush}"
+                                                       VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                                        <Button Click="BtnMoveNote_Click" Tag="{Binding}" Background="Transparent" BorderThickness="0" Padding="4" Cursor="Hand" ToolTip="{Binding [MoveNoteTip], Source={x:Static svc:Loc.Instance}}">
+                                            <Path Width="12" Height="12" Stretch="Uniform" Fill="{DynamicResource TextSecondaryBrush}" Data="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4M14,13V10L18,14L14,18V15H10V13H14Z" />
+                                        </Button>
+                                        <Button Click="BtnRenameNote_Click" Tag="{Binding}" Background="Transparent" BorderThickness="0" Padding="4" Cursor="Hand" ToolTip="{Binding [RenameTip], Source={x:Static svc:Loc.Instance}}">
+                                            <Path Width="12" Height="12" Stretch="Uniform" Fill="{DynamicResource TextSecondaryBrush}" Data="M3,17.25V21h3.75L17.81,9.94l-3.75-3.75L3,17.25ZM20.71,7.04a1,1,0,0,0,0-1.41l-2.34-2.34a1,1,0,0,0-1.41,0l-1.83,1.83,3.75,3.75,1.83-1.83Z" />
+                                        </Button>
+                                        <Button Click="BtnDeleteNote_Click" Tag="{Binding}" Background="Transparent" BorderThickness="0" Padding="4" Cursor="Hand" ToolTip="{Binding [DeleteTip], Source={x:Static svc:Loc.Instance}}">
+                                            <Path Width="12" Height="12" Stretch="Uniform" Fill="#EF4444" Data="M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19V4Z" />
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </Border>
+
+            <GridSplitter x:Name="MainGridSplitter"
+                          Grid.Column="1"
+                          Width="6"
+                          Margin="0,88,0,14"
+                          Background="Transparent"
+                          HorizontalAlignment="Center"
+                          VerticalAlignment="Stretch" />
+
+            <!-- INFINITE CANVAS DESK -->
+            <controls:InkCanvasControl x:Name="MainInkCanvas" Grid.Column="2" />
+
+            <!-- ============================================================ -->
+            <!-- LAYER 1: BOTTOM FLOATING CANVAS HUD PILL (COLLAPSIBLE)       -->
+            <!-- ============================================================ -->
+            <Grid Grid.Column="2"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Bottom"
+                  Margin="16,0,16,14">
+                <Border x:Name="BottomHudIsland"
+                        Style="{StaticResource FloatingIslandStyle}"
+                        CornerRadius="16"
+                        Padding="8,5"
+                        RenderTransformOrigin="0.5,1.0">
+                    <Border.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform x:Name="BottomHudScale" ScaleX="1" ScaleY="1" />
+                            <TranslateTransform x:Name="BottomHudTranslate" X="0" Y="0" />
+                        </TransformGroup>
+                    </Border.RenderTransform>
+                    <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                        <!-- Page Navigation Pill -->
+                        <Border Background="{DynamicResource PillTrackBrush}" CornerRadius="10" Padding="3" Margin="0,0,6,0">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button x:Name="BtnPrevPage" Content="◀" Style="{StaticResource FluentButtonStyle}" Click="BtnPrevPage_Click" Padding="8,4" FontSize="11" />
+                                <TextBlock x:Name="TxtPageIndicator"
+                                           Text="1 / 1"
+                                           VerticalAlignment="Center"
+                                           Margin="8,0"
+                                           FontWeight="SemiBold"
+                                           FontSize="12"
+                                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <Button x:Name="BtnNextPage" Content="▶" Style="{StaticResource FluentButtonStyle}" Click="BtnNextPage_Click" Padding="8,4" FontSize="11" />
+                                <Button x:Name="BtnAddPage" Content="+ Strona" Style="{StaticResource FluentButtonStyle}" Click="BtnAddPage_Click" Padding="9,4" Margin="4,0,0,0" FontSize="12" />
+                                <Button x:Name="BtnDeletePage" Content="Usuń stronę" Style="{StaticResource FluentButtonStyle}" Click="BtnDeletePage_Click" Padding="9,4" FontSize="12" Foreground="#DC2626" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Canvas Expansion Pill -->
+                        <Border Background="{DynamicResource PillTrackBrush}" CornerRadius="10" Padding="3" Margin="0,0,6,0">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button x:Name="BtnExpandWidth" Content="+800px ↔" Style="{StaticResource FluentButtonStyle}" Click="BtnExpandWidth_Click" Padding="8,4" FontSize="11.5" ToolTip="{Binding [ExpandWidthTip], Source={x:Static svc:Loc.Instance}}" />
+                                <Button x:Name="BtnExpandHeight" Content="+1000px ↕" Style="{StaticResource FluentButtonStyle}" Click="BtnExpandHeight_Click" Padding="8,4" FontSize="11.5" ToolTip="{Binding [ExpandHeightTip], Source={x:Static svc:Loc.Instance}}" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Zoom Pill -->
+                        <Border Background="{DynamicResource PillTrackBrush}" CornerRadius="10" Padding="3" Margin="0,0,6,0">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button x:Name="BtnZoomOut" Content="−" Click="BtnZoomOut_Click" Style="{StaticResource FluentButtonStyle}" Width="26" Padding="2,4" FontWeight="Bold" ToolTip="Oddal (Ctrl+-)" />
+                                <Button x:Name="BtnZoomReset" Content="100%" Click="BtnZoomReset_Click" Style="{StaticResource FluentButtonStyle}" Padding="7,4" FontSize="11.5" FontWeight="SemiBold" ToolTip="Reset widoku (100%)" />
+                                <Button x:Name="BtnZoomIn" Content="+" Click="BtnZoomIn_Click" Style="{StaticResource FluentButtonStyle}" Width="26" Padding="2,4" FontWeight="Bold" ToolTip="Przybliż (Ctrl+=)" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Clear & Export Pill -->
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="BtnClearPage" Content="Wyczyść" Style="{StaticResource OutlineButtonStyle}" Click="BtnClearPage_Click" Padding="9,5" Margin="0,0,6,0" FontSize="12" />
+                            <Button x:Name="BtnExportPng" Content="PNG" Style="{StaticResource OutlineButtonStyle}" Click="BtnExportPng_Click" Padding="9,5" Margin="0,0,6,0" FontSize="12" />
+                            <Button x:Name="BtnExportPdf" Content="Eksport PDF" Style="{StaticResource PrimaryButtonStyle}" Click="BtnExportPdf_Click" Padding="11,5" FontSize="12" />
+                        </StackPanel>
+
+                        <Border Width="1" Height="18" Background="{DynamicResource BorderBrush}" Margin="8,0,4,0" />
+                        <Button x:Name="BtnToggleBottomBar"
+                                Content="▾"
+                                Style="{StaticResource FluentButtonStyle}"
+                                Click="BtnToggleBottomBar_Click"
+                                Padding="7,4"
+                                FontSize="12"
+                                FontWeight="Bold"
+                                Foreground="{DynamicResource TextSecondaryBrush}"
+                                ToolTip="Ukryj dolny pasek" />
+                    </WrapPanel>
+                </Border>
+
+                <!-- Minimized Bottom Bar Restore Handle -->
+                <Border x:Name="BottomHudRestoreIsland"
+                        Visibility="Collapsed"
+                        Style="{StaticResource FloatingIslandStyle}"
+                        CornerRadius="12"
+                        Padding="4,2"
+                        RenderTransformOrigin="0.5,1.0">
+                    <Border.RenderTransform>
+                        <TransformGroup>
+                            <ScaleTransform x:Name="BottomHudRestoreScale" ScaleX="1" ScaleY="1" />
+                            <TranslateTransform x:Name="BottomHudRestoreTranslate" X="0" Y="0" />
+                        </TransformGroup>
+                    </Border.RenderTransform>
+                    <Button x:Name="BtnRestoreBottomBar"
+                            Content="▲"
+                            Style="{StaticResource FluentButtonStyle}"
+                            Click="BtnToggleBottomBar_Click"
+                            Padding="14,3"
+                            FontSize="11"
+                            FontWeight="Bold"
+                            Foreground="{DynamicResource PrimaryBrush}"
+                            ToolTip="Pokaż dolny pasek" />
+                </Border>
+            </Grid>
+        </Grid>
+
+        <!-- ================================================================ -->
+        <!-- LAYER 2: TOP FLOATING COMMAND DOCK + CONTEXTUAL TEXT FORMAT BAR  -->
+        <!-- ================================================================ -->
+        <StackPanel Panel.ZIndex="20"
+                    VerticalAlignment="Top"
+                    HorizontalAlignment="Stretch"
+                    Margin="14,12,14,0">
+
+            <!-- Main Floating Command Dock -->
+            <Border Style="{StaticResource FloatingIslandStyle}"
+                    CornerRadius="16"
+                    Padding="8,6">
+                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Home Screen Button -->
+                    <Button x:Name="BtnHome"
+                            Style="{StaticResource OutlineButtonStyle}"
+                            Width="36" Height="34"
+                            Padding="0"
+                            Margin="0,0,6,0"
+                            Click="BtnHome_Click"
+                            ToolTip="Ekran główny / Home">
+                        <Path Width="15" Height="15" Stretch="Uniform" Fill="{DynamicResource TextPrimaryBrush}"
+                              Data="M10,20V14H14V20H19V12H22L12,3L2,12H5V20H10Z" />
+                    </Button>
+
+                    <!-- Sidebar Toggle Button -->
+                    <Button x:Name="BtnToggleSidebar"
+                            Style="{StaticResource OutlineButtonStyle}"
+                            Width="36" Height="34"
+                            Padding="0"
+                            Margin="0,0,8,0"
+                            Click="BtnToggleSidebar_Click"
+                            ToolTip="Pokaż / Ukryj listę notatek">
+                        <Path Width="15" Height="15" Stretch="Uniform" Fill="{DynamicResource TextPrimaryBrush}"
+                              Data="M3,5A2,2 0 0,1 5,3H19A2,2 0 0,1 21,5V19A2,2 0 0,1 19,21H5A2,2 0 0,1 3,19V5M5,5V19H9V5H5M11,5V19H19V5H11Z" />
+                    </Button>
+
+                    <!-- Segmented Drawing Tools Pill (with sliding active pill indicator) -->
+                    <Border Background="{DynamicResource PillTrackBrush}" CornerRadius="11" Padding="3" Margin="0,0,8,0">
+                        <Grid x:Name="DrawingToolsHost">
+                            <Border x:Name="ActiveToolIndicator"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Stretch"
+                                    Width="0"
+                                    Background="{DynamicResource ControlSurfaceBrush}"
+                                    BorderBrush="{DynamicResource ActiveBorderBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="8"
+                                    IsHitTestVisible="False">
+                                <Border.RenderTransform>
+                                    <TranslateTransform x:Name="ActiveToolIndicatorTransform" X="0" Y="0" />
+                                </Border.RenderTransform>
+                                <Border.Effect>
+                                    <DropShadowEffect BlurRadius="6" ShadowDepth="1" Opacity="0.10" Color="#6D28D9" />
+                                </Border.Effect>
+                            </Border>
+
+                            <StackPanel x:Name="DrawingToolsPanel" Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- Cursor / Object Move Tool -->
+                                <RadioButton x:Name="BtnCursor" GroupName="DrawingTools" Style="{StaticResource SlidingToolRadioStyle}" Checked="Tool_Checked" PreviewMouseLeftButtonDown="ToolRadio_PreviewPointerDown" PreviewStylusDown="ToolRadio_PreviewStylusDown" PreviewStylusUp="ToolRadio_PreviewStylusUp" Tag="7" ToolTip="{Binding [CursorToolTip], Source={x:Static svc:Loc.Instance}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="14" Height="14" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" Data="M7,2L19,12L13.5,13L16.5,19.5L14.2,20.5L11.2,14L7,17.5V2Z" />
+                                        <TextBlock x:Name="LblToolCursor" Text="Kursor" Margin="5,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <!-- Ballpoint Pen (Długopis) -->
+                                <RadioButton x:Name="BtnPen" GroupName="DrawingTools" Style="{StaticResource SlidingToolRadioStyle}" IsChecked="True" Checked="Tool_Checked" PreviewMouseLeftButtonDown="ToolRadio_PreviewPointerDown" PreviewStylusDown="ToolRadio_PreviewStylusDown" PreviewStylusUp="ToolRadio_PreviewStylusUp" Tag="0" ToolTip="{Binding [PenToolTip], Source={x:Static svc:Loc.Instance}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="14" Height="14" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" Data="M3,17.25V21H6.75L17.81,9.94L14.06,6.19L3,17.25M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.13,5.12L18.88,8.87L20.71,7.04Z" />
+                                        <TextBlock x:Name="LblToolPen" Text="Długopis" Margin="5,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <!-- Classic Fountain Pen (Pióro) -->
+                                <RadioButton x:Name="BtnFountainPen" GroupName="DrawingTools" Style="{StaticResource SlidingToolRadioStyle}" Checked="Tool_Checked" PreviewMouseLeftButtonDown="ToolRadio_PreviewPointerDown" PreviewStylusDown="ToolRadio_PreviewStylusDown" PreviewStylusUp="ToolRadio_PreviewStylusUp" Tag="6" ToolTip="{Binding [FountainPenToolTip], Source={x:Static svc:Loc.Instance}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="14" Height="14" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" Data="M19.07,4.93L16.24,2.1L14.83,3.51L17.66,6.34L19.07,4.93M13.41,4.93L16.24,7.76L7.05,16.95L3,21L7.05,16.95M14.83,6.34L9.17,12C8.39,12.78 7.62,13.92 7.1,15.3L4,19.99L8.7,16.9C10.08,16.38 11.22,15.61 12,14.83L17.66,9.17L14.83,6.34Z" />
+                                        <TextBlock x:Name="LblToolFountainPen" Text="Pióro" Margin="5,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton x:Name="BtnPencil" GroupName="DrawingTools" Style="{StaticResource SlidingToolRadioStyle}" Checked="Tool_Checked" PreviewMouseLeftButtonDown="ToolRadio_PreviewPointerDown" PreviewStylusDown="ToolRadio_PreviewStylusDown" PreviewStylusUp="ToolRadio_PreviewStylusUp" Tag="1" ToolTip="{Binding [PencilToolTip], Source={x:Static svc:Loc.Instance}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="14" Height="14" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" Data="M16.84,2.73C16.45,2.73 16.07,2.88 15.77,3.17L13.65,5.29L18.95,10.6L21.07,8.5C21.67,7.89 21.67,6.94 21.07,6.36L17.9,3.17C17.6,2.88 17.22,2.73 16.84,2.73M12.94,6L4.84,14.11L7.4,14.39L7.58,16.68L9.86,16.85L10.15,19.41L18.25,11.3M4.25,15.04L2.5,21.73L9.2,19.94L8.96,17.78L6.65,17.61L6.47,15.29" />
+                                        <TextBlock x:Name="LblToolPencil" Text="Ołówek" Margin="5,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <RadioButton x:Name="BtnHighlighter" GroupName="DrawingTools" Style="{StaticResource SlidingToolRadioStyle}" Checked="Tool_Checked" PreviewMouseLeftButtonDown="ToolRadio_PreviewPointerDown" PreviewStylusDown="ToolRadio_PreviewStylusDown" PreviewStylusUp="ToolRadio_PreviewStylusUp" Tag="2" ToolTip="{Binding [HighlighterToolTip], Source={x:Static svc:Loc.Instance}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Path Width="14" Height="14" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" Data="M18.5,1.15L17.11,2.54L21.45,6.88L22.84,5.49C23.23,5.1 23.23,4.46 22.84,4.07L19.91,1.15C19.53,0.76 18.89,0.76 18.5,1.15M15.7,3.95L6.53,13.12C5.93,13.72 5.93,14.7 6.53,15.3L8.7,17.47C9.3,18.07 10.28,18.07 10.88,17.47L20.05,8.3M5.12,16.71L2,19.83V22H6.17L9.29,18.88" />
+                                        <TextBlock x:Name="LblToolHighlighter" Text="Zakreślacz" Margin="5,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+
+                                <!-- Eraser + Mode Dropdown -->
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <RadioButton x:Name="BtnEraser" GroupName="DrawingTools" Style="{StaticResource SlidingToolRadioStyle}" Checked="Tool_Checked" PreviewMouseLeftButtonDown="ToolRadio_PreviewPointerDown" PreviewStylusDown="ToolRadio_PreviewStylusDown" PreviewStylusUp="ToolRadio_PreviewStylusUp" Tag="3" ToolTip="{Binding [EraserToolTip], Source={x:Static svc:Loc.Instance}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path Width="14" Height="14" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" Data="M16.24,3.56L21.19,8.5C21.97,9.29 21.97,10.55 21.19,11.34L12,20.53C10.44,22.09 7.91,22.09 6.34,20.53L2.81,17C2.03,16.21 2.03,14.95 2.81,14.16L13.41,3.56C14.2,2.78 15.46,2.78 16.24,3.56M4.22,15.58L7.76,19.11C8.54,19.9 9.8,19.9 10.59,19.11L14.12,15.58L9.17,10.63L4.22,15.58Z" />
+                                            <TextBlock x:Name="LblToolEraser" Text="Gumka" Margin="5,0,0,0" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </RadioButton>
+                                    <Button x:Name="BtnEraserDropdown"
+                                            Content="▾"
+                                            Style="{StaticResource FluentButtonStyle}"
+                                            Click="BtnEraserDropdown_Click"
+                                            Padding="4,5"
+                                            FontSize="10"
+                                            Margin="-2,0,2,0"
+                                            ToolTip="{Binding [EraserModeTip], Source={x:Static svc:Loc.Instance}}" />
+                                </StackPanel>
+
+                                <Popup x:Name="PopupEraserMode" PlacementTarget="{Binding ElementName=BtnEraser}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                                    <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="6" Margin="6" Width="216">
+                                        <StackPanel>
+                                            <Button x:Name="BtnEraserStroke" Style="{StaticResource FluentButtonStyle}" HorizontalContentAlignment="Left" Padding="10,7" Click="BtnEraserStroke_Click">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock x:Name="ChkEraserStroke" Text="●" FontSize="10" Foreground="{DynamicResource PrimaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                    <StackPanel>
+                                                        <TextBlock Text="Stroke Eraser" FontWeight="SemiBold" FontSize="12" />
+                                                        <TextBlock Text="{Binding [EraserStrokeDesc], Source={x:Static svc:Loc.Instance}}" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnEraserPoint" Style="{StaticResource FluentButtonStyle}" HorizontalContentAlignment="Left" Padding="10,7" Click="BtnEraserPoint_Click">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock x:Name="ChkEraserPoint" Text="●" FontSize="10" Foreground="{DynamicResource PrimaryBrush}" Visibility="Hidden" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                    <StackPanel>
+                                                        <TextBlock Text="Point Eraser" FontWeight="SemiBold" FontSize="12" />
+                                                        <TextBlock Text="{Binding [EraserPointDesc], Source={x:Static svc:Loc.Instance}}" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </Popup>
+
+                                <!-- Select + Mode Dropdown (Marquee / Lasso) -->
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <RadioButton x:Name="BtnSelect" GroupName="DrawingTools" Style="{StaticResource SlidingToolRadioStyle}" Checked="Tool_Checked" PreviewMouseLeftButtonDown="ToolRadio_PreviewPointerDown" PreviewStylusDown="ToolRadio_PreviewStylusDown" PreviewStylusUp="ToolRadio_PreviewStylusUp" Tag="4" ToolTip="{Binding [SelectToolTip], Source={x:Static svc:Loc.Instance}}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Path x:Name="IconSelectMode" Width="14" Height="14" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" Data="M11,2H13V5H11V2M11,19H13V22H11V19M2,11H5V13H2V11M19,11H22V13H19V11M12,7L17,21L14.8,21.8L11.5,12.5L7.5,16.5V5.5L12,7Z" />
+                                            <TextBlock x:Name="LblToolSelect" Text="Zaznacz" Margin="5,0,0,0" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </RadioButton>
+                                    <Button x:Name="BtnSelectDropdown"
+                                            Content="▾"
+                                            Style="{StaticResource FluentButtonStyle}"
+                                            Click="BtnSelectDropdown_Click"
+                                            Padding="4,5"
+                                            FontSize="10"
+                                            Margin="-2,0,2,0"
+                                            ToolTip="{Binding [SelectModeTip], Source={x:Static svc:Loc.Instance}}" />
+                                </StackPanel>
+
+                                <Popup x:Name="PopupSelectionMode" PlacementTarget="{Binding ElementName=BtnSelect}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                                    <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="6" Margin="6" Width="220">
+                                        <StackPanel>
+                                            <Button x:Name="BtnSelectMarquee" Style="{StaticResource FluentButtonStyle}" HorizontalContentAlignment="Left" Padding="10,7" Click="BtnSelectMarquee_Click">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock x:Name="ChkSelectMarquee" Text="●" FontSize="10" Foreground="{DynamicResource PrimaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                    <StackPanel>
+                                                        <TextBlock x:Name="TxtSelectMarqueeTitle" Text="Prostokąt" FontWeight="SemiBold" FontSize="12" />
+                                                        <TextBlock Text="{Binding [SelectMarqueeDesc], Source={x:Static svc:Loc.Instance}}" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="BtnSelectLasso" Style="{StaticResource FluentButtonStyle}" HorizontalContentAlignment="Left" Padding="10,7" Click="BtnSelectLasso_Click">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock x:Name="ChkSelectLasso" Text="●" FontSize="10" Foreground="{DynamicResource PrimaryBrush}" Visibility="Hidden" Margin="0,0,8,0" VerticalAlignment="Center" />
+                                                    <StackPanel>
+                                                        <TextBlock x:Name="TxtSelectLassoTitle" Text="Lasso" FontWeight="SemiBold" FontSize="12" />
+                                                        <TextBlock Text="{Binding [SelectLassoDesc], Source={x:Static svc:Loc.Instance}}" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Border>
+                                </Popup>
+
+                                <RadioButton x:Name="BtnLaser" GroupName="DrawingTools" Style="{StaticResource SlidingToolRadioStyle}" Checked="Tool_Checked" PreviewMouseLeftButtonDown="ToolRadio_PreviewPointerDown" PreviewStylusDown="ToolRadio_PreviewStylusDown" PreviewStylusUp="ToolRadio_PreviewStylusUp" Tag="5" ToolTip="{Binding [LaserToolTip], Source={x:Static svc:Loc.Instance}}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="9" Height="9" Fill="#EF4444" Stroke="#FCA5A5" StrokeThickness="2" VerticalAlignment="Center" />
+                                        <TextBlock x:Name="LblToolLaser" Text="Laser" Margin="5,0,0,0" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </RadioButton>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+
+                    <!-- Segmented Smart Insert Pill -->
+                    <Border Background="{DynamicResource PillTrackBrush}" CornerRadius="11" Padding="3" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <ToggleButton x:Name="BtnShapeSnap"
+                                          Style="{StaticResource ToolButtonStyle}"
+                                          IsChecked="True"
+                                          Checked="BtnShapeSnap_Toggle"
+                                          Unchecked="BtnShapeSnap_Toggle"
+                                          ToolTip="{Binding [ShapeSnapTip], Source={x:Static svc:Loc.Instance}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Width="14" Height="14" Stretch="Uniform" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ToggleButton}}" Data="M11,15H6L13,1V9H18L11,23V15Z" />
+                                    <TextBlock x:Name="LblShapeSnap" Text="Auto-kształt" Margin="4,0,0,0" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </ToggleButton>
+
+                            <Button x:Name="BtnInsertShape" Style="{StaticResource FluentButtonStyle}" Click="BtnInsertShape_Click" Margin="1,0" Padding="8,5" ToolTip="{Binding [InsertShapeTip], Source={x:Static svc:Loc.Instance}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource PrimaryBrush}" Data="M12,2L1,21H23M12,6L19.53,19H4.47" />
+                                    <TextBlock x:Name="LblInsertShape" Text="Kształt ▾" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button x:Name="BtnInsertTable" Style="{StaticResource FluentButtonStyle}" Click="BtnInsertTable_Click" Margin="1,0" Padding="8,5" ToolTip="{Binding [InsertTableTip], Source={x:Static svc:Loc.Instance}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Width="14" Height="14" Stretch="Uniform" Fill="#0F766E" Data="M4,3H20A2,2 0 0,1 22,5V19A2,2 0 0,1 20,21H4A2,2 0 0,1 2,19V5A2,2 0 0,1 4,3M4,7V11H10V7H4M12,7V11H20V7H12M4,13V19H10V13H4M12,13V19H20V19H12V13Z" />
+                                    <TextBlock x:Name="LblInsertTable" Text="Tabela ▾" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button x:Name="BtnInsertText" Style="{StaticResource FluentButtonStyle}" Click="BtnInsertText_Click" Margin="1,0" Padding="8,5" ToolTip="{Binding [InsertStickyTip], Source={x:Static svc:Loc.Instance}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Width="14" Height="14" Stretch="Uniform" Fill="#D97706" Data="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H15L21,15V5C21,3.89 20.1,3 19,3M14,19.5V14H19.5L14,19.5Z" />
+                                    <TextBlock x:Name="LblInsertText" Text="Karteczka" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button x:Name="BtnInsertTextBox" Style="{StaticResource FluentButtonStyle}" Click="BtnInsertTextBox_Click" Margin="1,0" Padding="8,5" ToolTip="{Binding [InsertTextBoxTip], Source={x:Static svc:Loc.Instance}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Width="14" Height="14" Stretch="Uniform" Fill="#4F46E5" Data="M5,4V7H10.5V19H13.5V7H19V4H5Z" />
+                                    <TextBlock x:Name="LblInsertTextBox" Text="Tekst" Margin="4,0,0,0" VerticalAlignment="Center" FontSize="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button x:Name="BtnInsertAxes" Style="{StaticResource FluentButtonStyle}" Click="BtnInsertAxes_Click" Margin="1,0" Padding="8,5" ToolTip="{Binding [InsertAxesTip], Source={x:Static svc:Loc.Instance}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Width="14" Height="14" Stretch="Uniform" Fill="#7C3AED" Data="M5,2V19H22V21H3V2H5M7,17L12,11L15,14L20,7L21.5,8L15.3,16.5L12,13.5L8.2,18.2L7,17Z" />
+                                    <TextBlock x:Name="LblInsertAxes" Text="Układ" Margin="4,0,0,0" VerticalAlignment="Center" FontSize="12" />
+                                </StackPanel>
+                            </Button>
+
+                            <Button x:Name="BtnInsertImage" Style="{StaticResource FluentButtonStyle}" Click="BtnInsertImage_Click" Margin="1,0" Padding="8,5" ToolTip="{Binding [InsertImageTip], Source={x:Static svc:Loc.Instance}}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Width="14" Height="14" Stretch="Uniform" Fill="#0284C7" Data="M8.5,13.5L11,16.5L14.5,12L19,18H5M21,19V5C21,3.89 20.1,3 19,3H5A2,2 0 0,0 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19Z" />
+                                    <TextBlock x:Name="LblInsertImage" Text="Obraz ▾" Margin="4,0,0,0" VerticalAlignment="Center" FontSize="12" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Popups for Shapes, Table Size & Image Insert -->
+                    <Popup x:Name="PopupInsertImage" PlacementTarget="{Binding ElementName=BtnInsertImage}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                        <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="12" Padding="6" Margin="6" Width="232">
+                            <StackPanel>
+                                <Button x:Name="BtnPasteImage" Style="{StaticResource FluentButtonStyle}" HorizontalContentAlignment="Left" Padding="10,8" Click="BtnPasteImage_Click">
+                                    <StackPanel>
+                                        <TextBlock x:Name="TxtPasteImageTitle" Text="Wklej ze schowka (Ctrl+V)" FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="{Binding [PasteClipboardSub], Source={x:Static svc:Loc.Instance}}" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                </Button>
+                                <Button x:Name="BtnChooseImageFile" Style="{StaticResource FluentButtonStyle}" HorizontalContentAlignment="Left" Padding="10,8" Click="BtnChooseImageFile_Click">
+                                    <StackPanel>
+                                        <TextBlock x:Name="TxtChooseImageFileTitle" Text="Wybierz obraz z pliku..." FontWeight="SemiBold" FontSize="12" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                        <TextBlock Text="PNG, JPG, BMP, GIF, WEBP" FontSize="10" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+
+                    <Popup x:Name="PopupShapes" PlacementTarget="{Binding ElementName=BtnInsertShape}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                        <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="12" Margin="8">
+                            <StackPanel>
+                                <TextBlock x:Name="LblShapes2DHeader" Text="{Binding [Shapes2DHeader], Source={x:Static svc:Loc.Instance}}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="4,0,0,6" />
+                                <UniformGrid x:Name="ShapesGalleryPanel" Columns="5" />
+                                <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="4,8,4,8" />
+                                <TextBlock x:Name="LblShapes3DHeader" Text="{Binding [Shapes3DHeader], Source={x:Static svc:Loc.Instance}}" FontSize="11" FontWeight="Bold" Foreground="{DynamicResource PrimaryBrush}" Margin="4,0,0,6" />
+                                <UniformGrid x:Name="Shapes3DGalleryPanel" Columns="5" />
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+
+                    <Popup x:Name="PopupTableSize" PlacementTarget="{Binding ElementName=BtnInsertTable}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                        <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="14" Margin="8" Width="236">
+                            <StackPanel>
+                                <TextBlock Text="{Binding [TableSizeTitle], Source={x:Static svc:Loc.Instance}}" FontWeight="SemiBold" FontSize="12.5" Foreground="{DynamicResource TextPrimaryBrush}" Margin="0,0,0,10" />
+                                <UniformGrid Columns="3" Margin="0,0,0,12">
+                                    <Button Content="2×2" Style="{StaticResource OutlineButtonStyle}" Padding="6,5" Margin="2" Click="TablePreset_Click" Tag="2,2" />
+                                    <Button Content="3×3" Style="{StaticResource OutlineButtonStyle}" Padding="6,5" Margin="2" Click="TablePreset_Click" Tag="3,3" />
+                                    <Button Content="4×4" Style="{StaticResource OutlineButtonStyle}" Padding="6,5" Margin="2" Click="TablePreset_Click" Tag="4,4" />
+                                    <Button Content="5×3" Style="{StaticResource OutlineButtonStyle}" Padding="6,5" Margin="2" Click="TablePreset_Click" Tag="5,3" />
+                                    <Button Content="6×4" Style="{StaticResource OutlineButtonStyle}" Padding="6,5" Margin="2" Click="TablePreset_Click" Tag="6,4" />
+                                </UniformGrid>
+                                <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,10" />
+                                <TextBlock Text="{Binding [TableCustomSizeLabel], Source={x:Static svc:Loc.Instance}}" FontSize="11" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,0,0,6" />
+                                <Grid Margin="0,0,0,10">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBox x:Name="TxtTableRows" Grid.Column="0" Text="4" Padding="6,5" HorizontalContentAlignment="Center" FontSize="12.5" />
+                                    <TextBlock Grid.Column="1" Text="×" Margin="8,0" VerticalAlignment="Center" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" />
+                                    <TextBox x:Name="TxtTableCols" Grid.Column="2" Text="4" Padding="6,5" HorizontalContentAlignment="Center" FontSize="12.5" />
+                                </Grid>
+                                <Button Content="{Binding [Insert], Source={x:Static svc:Loc.Instance}}" Style="{StaticResource PrimaryButtonStyle}" Padding="8,7" Click="BtnInsertCustomTable_Click" />
+                            </StackPanel>
+                        </Border>
+                    </Popup>
+
+                    <!-- Contextual Selection Actions Pill -->
+                    <Border x:Name="SelectionActionsPanel" Visibility="Collapsed" Background="{DynamicResource SelectionTintBrush}" BorderBrush="{DynamicResource ActiveBorderBrush}" BorderThickness="1" CornerRadius="11" Padding="3" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="BtnReverseArrow" Content="⇄ Odwróć" Style="{StaticResource FluentButtonStyle}" Click="BtnReverseArrow_Click" Padding="8,4" Visibility="Collapsed" />
+                            <Button x:Name="BtnCopySelected" Content="📋 Powiel" Style="{StaticResource FluentButtonStyle}" Click="BtnCopySelected_Click" Padding="8,4" Foreground="{DynamicResource PrimaryBrush}" ToolTip="Powiel zaznaczenie" />
+                            <Button x:Name="BtnDeleteSelected" Content="🗑️" Style="{StaticResource FluentButtonStyle}" Click="BtnDeleteSelected_Click" Padding="8,4" Foreground="#DC2626" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Color Swatches & Thickness Pill -->
+                    <Border Background="{DynamicResource PillTrackBrush}" CornerRadius="11" Padding="5,3" Margin="0,0,8,0">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <StackPanel x:Name="ColorPalettePanel" Orientation="Horizontal" VerticalAlignment="Center">
+                                <StackPanel.Resources>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Width" Value="18" />
+                                        <Setter Property="Height" Value="18" />
+                                        <Setter Property="Cursor" Value="Hand" />
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="1"
+                                                            CornerRadius="9" />
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </StackPanel.Resources>
+                                <Border CornerRadius="12" Padding="2" BorderThickness="2" BorderBrush="Transparent" Tag="#1E1E1E" Margin="1,0">
+                                    <Button Background="#1E1E1E" BorderBrush="#CBD5E1" Click="Color_Click" Tag="#1E1E1E" ToolTip="{Binding [ColorBlack], Source={x:Static svc:Loc.Instance}}" />
+                                </Border>
+                                <Border CornerRadius="12" Padding="2" BorderThickness="2" BorderBrush="Transparent" Tag="#FFFFFF" Margin="1,0">
+                                    <Button Background="#FFFFFF" BorderBrush="#94A3B8" Click="Color_Click" Tag="#FFFFFF" ToolTip="{Binding [ColorWhite], Source={x:Static svc:Loc.Instance}}" />
+                                </Border>
+                                <Border CornerRadius="12" Padding="2" BorderThickness="2" BorderBrush="Transparent" Tag="#2563EB" Margin="1,0">
+                                    <Button Background="#2563EB" BorderBrush="#1D4ED8" Click="Color_Click" Tag="#2563EB" ToolTip="{Binding [ColorBlue], Source={x:Static svc:Loc.Instance}}" />
+                                </Border>
+                                <Border CornerRadius="12" Padding="2" BorderThickness="2" BorderBrush="Transparent" Tag="#DC2626" Margin="1,0">
+                                    <Button Background="#DC2626" BorderBrush="#B91C1C" Click="Color_Click" Tag="#DC2626" ToolTip="{Binding [ColorRed], Source={x:Static svc:Loc.Instance}}" />
+                                </Border>
+                                <Border CornerRadius="12" Padding="2" BorderThickness="2" BorderBrush="Transparent" Tag="#16A34A" Margin="1,0">
+                                    <Button Background="#16A34A" BorderBrush="#15803D" Click="Color_Click" Tag="#16A34A" ToolTip="{Binding [ColorGreen], Source={x:Static svc:Loc.Instance}}" />
+                                </Border>
+                                <Border CornerRadius="12" Padding="2" BorderThickness="2" BorderBrush="Transparent" Tag="#D97706" Margin="1,0">
+                                    <Button Background="#D97706" BorderBrush="#B45309" Click="Color_Click" Tag="#D97706" ToolTip="{Binding [ColorAmber], Source={x:Static svc:Loc.Instance}}" />
+                                </Border>
+                                <Border CornerRadius="12" Padding="2" BorderThickness="2" BorderBrush="Transparent" Tag="#9333EA" Margin="1,0">
+                                    <Button Background="#9333EA" BorderBrush="#7E22CE" Click="Color_Click" Tag="#9333EA" ToolTip="{Binding [ColorPurple], Source={x:Static svc:Loc.Instance}}" />
+                                </Border>
+                                <Border CornerRadius="12" Padding="2" BorderThickness="2" BorderBrush="Transparent" Tag="#EC4899" Margin="1,0">
+                                    <Button Background="#EC4899" BorderBrush="#DB2777" Click="Color_Click" Tag="#EC4899" ToolTip="{Binding [ColorPink], Source={x:Static svc:Loc.Instance}}" />
+                                </Border>
+                            </StackPanel>
+
+                            <Button x:Name="BtnCustomColor" Click="BtnCustomColor_Click" Style="{StaticResource FluentButtonStyle}" Padding="5,4" Margin="2,0,4,0" ToolTip="Własny kolor / Custom Color">
+                                <Grid Width="18" Height="18">
+                                    <Ellipse StrokeThickness="2">
+                                        <Ellipse.Stroke>
+                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                                                <GradientStop Color="#EF4444" Offset="0" />
+                                                <GradientStop Color="#F59E0B" Offset="0.25" />
+                                                <GradientStop Color="#10B981" Offset="0.5" />
+                                                <GradientStop Color="#3B82F6" Offset="0.75" />
+                                                <GradientStop Color="#A855F7" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </Ellipse.Stroke>
+                                    </Ellipse>
+                                    <Ellipse x:Name="CustomColorDot" Width="10" Height="10" Fill="#1E1E1E" />
+                                </Grid>
+                            </Button>
+
+                            <Border Width="1" Height="18" Background="{DynamicResource BorderBrush}" Margin="2,0,4,0" />
+
+                            <Button x:Name="BtnThicknessDropdown" Click="BtnThicknessDropdown_Click" Style="{StaticResource FluentButtonStyle}" Padding="8,4" ToolTip="Grubość linii / Line Thickness">
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Line X1="0" Y1="7" X2="22" Y2="7" x:Name="LineThicknessPreview" Stroke="{DynamicResource TextPrimaryBrush}" StrokeThickness="3.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" Width="22" Height="14" />
+                                    <TextBlock x:Name="TxtThicknessValue" Text="3.5 px ▾" Margin="6,0,0,0" FontSize="12" FontWeight="Medium" VerticalAlignment="Center" />
+                                </StackPanel>
+                            </Button>
+
+                            <Popup x:Name="PopupThickness" PlacementTarget="{Binding ElementName=BtnThicknessDropdown}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                                <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="14" Margin="8" Width="244">
+                                    <StackPanel>
+                                        <StackPanel x:Name="ThicknessPresetsPanel" Margin="0,0,0,10" />
+                                        <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,10" />
+                                        <DockPanel Margin="0,0,0,6">
+                                            <TextBlock x:Name="LblCustomThickness" Text="Własna grubość (px)" FontSize="11.5" FontWeight="SemiBold" Foreground="{DynamicResource TextPrimaryBrush}" VerticalAlignment="Center" />
+                                            <TextBox x:Name="TxtCustomThickness" DockPanel.Dock="Right" Width="54" Text="3.5" HorizontalContentAlignment="Center" Padding="4,3" KeyDown="TxtCustomThickness_KeyDown" LostFocus="TxtCustomThickness_LostFocus" />
+                                        </DockPanel>
+                                        <Slider x:Name="SliderCustomThickness" Minimum="0.5" Maximum="30" Value="3.5" TickFrequency="0.5" IsSnapToTickEnabled="True" ValueChanged="SliderCustomThickness_ValueChanged" />
+                                    </StackPanel>
+                                </Border>
+                            </Popup>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- History & Settings Pill -->
+                    <Border Background="{DynamicResource PillTrackBrush}" CornerRadius="11" Padding="3">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <Button x:Name="BtnUndo" Style="{StaticResource FluentButtonStyle}" Click="BtnUndo_Click" Padding="8,5" ToolTip="Cofnij (Ctrl+Z)">
+                                <Path Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource TextPrimaryBrush}" Data="M12.5,8C9.85,8 7.45,9 5.6,10.6L2,7V16H11L7.38,12.38C8.77,11.22 10.54,10.5 12.5,10.5C16.04,10.5 19.05,12.81 20.1,16L22.47,15.22C21.08,11.03 17.15,8 12.5,8Z" />
+                            </Button>
+                            <Button x:Name="BtnRedo" Style="{StaticResource FluentButtonStyle}" Click="BtnRedo_Click" Padding="8,5" ToolTip="Ponów (Ctrl+Y)">
+                                <Path Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource TextPrimaryBrush}" Data="M18.4,10.6C16.55,9 14.15,8 11.5,8C6.85,8 2.92,11.03 1.54,15.22L3.9,16C4.95,12.81 7.95,10.5 11.5,10.5C13.45,10.5 15.23,11.22 16.62,12.38L13,16H22V7L18.4,10.6Z" />
+                            </Button>
+                            <Border Width="1" Height="18" Background="{DynamicResource BorderBrush}" Margin="3,0" />
+                            <Button x:Name="BtnSettings" Click="BtnSettings_Click" Style="{StaticResource FluentButtonStyle}" Padding="9,5" ToolTip="Ustawienia / Settings">
+                                <StackPanel Orientation="Horizontal">
+                                    <Path Width="14" Height="14" Stretch="Uniform" Fill="{DynamicResource TextPrimaryBrush}" Data="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+                                    <TextBlock x:Name="LblSettings" Text="Ustawienia" Margin="5,0,0,0" VerticalAlignment="Center" FontSize="12" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Border>
+                </WrapPanel>
+            </Border>
+
+            <!-- Contextual Text Formatting Bar (Visible only when a text box / sticky note is focused) -->
+            <Border x:Name="TextFormattingBar"
+                    Visibility="Collapsed"
+                    HorizontalAlignment="Center"
+                    Margin="0,8,0,0"
+                    Style="{StaticResource FloatingIslandStyle}"
+                    CornerRadius="14"
+                    Padding="10,5">
+                <Border.RenderTransform>
+                    <TranslateTransform x:Name="TextFormattingBarTranslate" X="0" Y="0" />
+                </Border.RenderTransform>
+                <WrapPanel Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Font Family & Size -->
+                    <ComboBox x:Name="CmbTextFontFamily" Width="122" Height="28" FontSize="11.5" Margin="0,0,4,0" SelectionChanged="CmbTextFontFamily_SelectionChanged">
+                        <ComboBoxItem Content="Segoe UI" IsSelected="True" />
+                        <ComboBoxItem Content="Calibri" />
+                        <ComboBoxItem Content="Arial" />
+                        <ComboBoxItem Content="Georgia" />
+                        <ComboBoxItem Content="Times New Roman" />
+                        <ComboBoxItem Content="Consolas" />
+                        <ComboBoxItem Content="Comic Sans MS" />
+                    </ComboBox>
+
+                    <ComboBox x:Name="CmbTextFontSize" Width="58" Height="28" FontSize="11.5" Margin="0,0,4,0" SelectionChanged="CmbTextFontSize_SelectionChanged">
+                        <ComboBoxItem Content="10" />
+                        <ComboBoxItem Content="12" />
+                        <ComboBoxItem Content="14" />
+                        <ComboBoxItem Content="15" IsSelected="True" />
+                        <ComboBoxItem Content="16" />
+                        <ComboBoxItem Content="18" />
+                        <ComboBoxItem Content="20" />
+                        <ComboBoxItem Content="24" />
+                        <ComboBoxItem Content="28" />
+                        <ComboBoxItem Content="32" />
+                        <ComboBoxItem Content="40" />
+                        <ComboBoxItem Content="48" />
+                    </ComboBox>
+
+                    <Button Content="A−" Style="{StaticResource FluentButtonStyle}" Padding="6,4" FontSize="11" Click="BtnTextFontSmaller_Click" ToolTip="{Binding [FontSmallerTip], Source={x:Static svc:Loc.Instance}}" />
+                    <Button Content="A+" Style="{StaticResource FluentButtonStyle}" Padding="6,4" FontSize="11" Margin="0,0,6,0" Click="BtnTextFontLarger_Click" ToolTip="{Binding [FontLargerTip], Source={x:Static svc:Loc.Instance}}" />
+
+                    <Border Width="1" Height="18" Background="{DynamicResource BorderBrush}" Margin="2,0,6,0" />
+
+                    <!-- Style Toggles -->
+                    <Border Background="{DynamicResource PillTrackBrush}" CornerRadius="9" Padding="2" Margin="0,0,6,0">
+                        <StackPanel Orientation="Horizontal">
+                            <ToggleButton x:Name="BtnTextBold" Content="B" FontWeight="Bold" Width="28" Height="26" Padding="0" Style="{StaticResource ToolButtonStyle}" Click="BtnTextFormat_Click" ToolTip="{Binding [BoldTip], Source={x:Static svc:Loc.Instance}}" />
+                            <ToggleButton x:Name="BtnTextItalic" Content="I" FontStyle="Italic" Width="28" Height="26" Padding="0" Style="{StaticResource ToolButtonStyle}" Click="BtnTextFormat_Click" ToolTip="{Binding [ItalicTip], Source={x:Static svc:Loc.Instance}}" />
+                            <ToggleButton x:Name="BtnTextUnderline" Width="28" Height="26" Padding="0" Style="{StaticResource ToolButtonStyle}" Click="BtnTextFormat_Click" ToolTip="{Binding [UnderlineTip], Source={x:Static svc:Loc.Instance}}">
+                                <TextBlock Text="U" TextDecorations="Underline" FontWeight="SemiBold" />
+                            </ToggleButton>
+                            <ToggleButton x:Name="BtnTextStrike" Width="28" Height="26" Padding="0" Style="{StaticResource ToolButtonStyle}" Click="BtnTextFormat_Click" ToolTip="{Binding [StrikeTip], Source={x:Static svc:Loc.Instance}}">
+                                <TextBlock Text="S" TextDecorations="Strikethrough" FontWeight="SemiBold" />
+                            </ToggleButton>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Alignment & Bullets -->
+                    <Border Background="{DynamicResource PillTrackBrush}" CornerRadius="9" Padding="2" Margin="0,0,6,0">
+                        <StackPanel Orientation="Horizontal">
+                            <Button x:Name="BtnAlignLeft" Content="≡L" Width="28" Height="26" FontSize="10.5" Padding="0" Style="{StaticResource FluentButtonStyle}" Click="BtnTextAlign_Click" Tag="Left" ToolTip="{Binding [AlignLeftTip], Source={x:Static svc:Loc.Instance}}" />
+                            <Button x:Name="BtnAlignCenter" Content="≡C" Width="28" Height="26" FontSize="10.5" Padding="0" Style="{StaticResource FluentButtonStyle}" Click="BtnTextAlign_Click" Tag="Center" ToolTip="{Binding [AlignCenterTip], Source={x:Static svc:Loc.Instance}}" />
+                            <Button x:Name="BtnAlignRight" Content="≡R" Width="28" Height="26" FontSize="10.5" Padding="0" Style="{StaticResource FluentButtonStyle}" Click="BtnTextAlign_Click" Tag="Right" ToolTip="{Binding [AlignRightTip], Source={x:Static svc:Loc.Instance}}" />
+                            <Button x:Name="BtnAlignJustify" Content="≡J" Width="28" Height="26" FontSize="10.5" Padding="0" Style="{StaticResource FluentButtonStyle}" Click="BtnTextAlign_Click" Tag="Justify" ToolTip="{Binding [AlignJustifyTip], Source={x:Static svc:Loc.Instance}}" />
+                            <Button Content="{Binding [BulletsLabel], Source={x:Static svc:Loc.Instance}}" Height="26" FontSize="11" Padding="7,0" Style="{StaticResource FluentButtonStyle}" Click="BtnTextBullets_Click" ToolTip="{Binding [BulletsTip], Source={x:Static svc:Loc.Instance}}" />
+                            <Button Content="Tx" Width="28" Height="26" FontSize="11" Padding="0" Style="{StaticResource FluentButtonStyle}" Click="BtnTextClearFormat_Click" ToolTip="{Binding [ClearFormatTip], Source={x:Static svc:Loc.Instance}}" />
+                            <Button x:Name="BtnTextSymbols" Content="∑ Symbole ▾" Height="26" FontSize="11" FontWeight="SemiBold" Padding="7,0" Focusable="False" Foreground="{DynamicResource PrimaryBrush}" Style="{StaticResource FluentButtonStyle}" Click="BtnTextSymbols_Click" ToolTip="{Binding [SymbolsTip], Source={x:Static svc:Loc.Instance}}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Popup x:Name="PopupTextSymbols" PlacementTarget="{Binding ElementName=BtnTextSymbols}" Placement="Bottom" StaysOpen="False" AllowsTransparency="True">
+                        <Border Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="12" Margin="8" Width="368">
+                            <ScrollViewer MaxHeight="340" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel x:Name="SymbolsCategoryHost" Margin="0,0,4,0" />
+                            </ScrollViewer>
+                        </Border>
+                    </Popup>
+
+                    <!-- Text Color Dots -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,6,0">
+                        <StackPanel.Resources>
+                            <Style TargetType="Button">
+                                <Setter Property="Width" Value="16" />
+                                <Setter Property="Height" Value="16" />
+                                <Setter Property="Margin" Value="2,0" />
+                                <Setter Property="Cursor" Value="Hand" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="8" />
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </StackPanel.Resources>
+                        <TextBlock Text="A:" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,3,0" />
+                        <Button Background="#111827" BorderBrush="#94A3B8" Click="BtnTextColor_Click" Tag="#111827" ToolTip="{Binding [ColorBlackTextTip], Source={x:Static svc:Loc.Instance}}" />
+                        <Button Background="#FFFFFF" BorderBrush="#94A3B8" Click="BtnTextColor_Click" Tag="#FFFFFF" ToolTip="{Binding [ColorWhiteTextTip], Source={x:Static svc:Loc.Instance}}" />
+                        <Button Background="#2563EB" BorderBrush="#1D4ED8" Click="BtnTextColor_Click" Tag="#2563EB" ToolTip="{Binding [ColorBlueTextTip], Source={x:Static svc:Loc.Instance}}" />
+                        <Button Background="#DC2626" BorderBrush="#B91C1C" Click="BtnTextColor_Click" Tag="#DC2626" ToolTip="{Binding [ColorRedTextTip], Source={x:Static svc:Loc.Instance}}" />
+                        <Button Background="#16A34A" BorderBrush="#15803D" Click="BtnTextColor_Click" Tag="#16A34A" ToolTip="{Binding [ColorGreenTextTip], Source={x:Static svc:Loc.Instance}}" />
+                        <Button Background="#7C3AED" BorderBrush="#6D28D9" Click="BtnTextColor_Click" Tag="#7C3AED" ToolTip="{Binding [ColorPurpleTextTip], Source={x:Static svc:Loc.Instance}}" />
+                    </StackPanel>
+                    <Button Content="🎨" Style="{StaticResource FluentButtonStyle}" Padding="5,3" FontSize="12" Margin="0,0,6,0" Click="BtnTextCustomColor_Click" ToolTip="{Binding [CustomTextColorTip], Source={x:Static svc:Loc.Instance}}" />
+
+                    <Border Width="1" Height="18" Background="{DynamicResource BorderBrush}" Margin="2,0,6,0" />
+
+                    <!-- Note / Box Background Swatches -->
+                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,6,0">
+                        <StackPanel.Resources>
+                            <Style TargetType="Button">
+                                <Setter Property="Width" Value="16" />
+                                <Setter Property="Height" Value="16" />
+                                <Setter Property="Margin" Value="2,0" />
+                                <Setter Property="Cursor" Value="Hand" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="1" CornerRadius="4">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </StackPanel.Resources>
+                        <TextBlock Text="{Binding [BgColorLabel], Source={x:Static svc:Loc.Instance}}" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,3,0" />
+                        <Button Background="#FEF08A" BorderBrush="#CA8A04" Click="BtnNoteBgColor_Click" Tag="#FEF08A" ToolTip="{Binding [ColorYellowBg], Source={x:Static svc:Loc.Instance}}" />
+                        <Button Background="#BFDBFE" BorderBrush="#2563EB" Click="BtnNoteBgColor_Click" Tag="#BFDBFE" ToolTip="{Binding [ColorBlueBg], Source={x:Static svc:Loc.Instance}}" />
+                        <Button Background="#BBF7D0" BorderBrush="#16A34A" Click="BtnNoteBgColor_Click" Tag="#BBF7D0" ToolTip="{Binding [ColorGreenBg], Source={x:Static svc:Loc.Instance}}" />
+                        <Button Background="#FBCFE8" BorderBrush="#DB2777" Click="BtnNoteBgColor_Click" Tag="#FBCFE8" ToolTip="{Binding [ColorPinkBg], Source={x:Static svc:Loc.Instance}}" />
+                        <Button Background="#EDE9FE" BorderBrush="#7C3AED" Click="BtnNoteBgColor_Click" Tag="#EDE9FE" ToolTip="{Binding [ColorLavenderBg], Source={x:Static svc:Loc.Instance}}" />
+                        <Button Background="#FFFFFF" BorderBrush="#94A3B8" Click="BtnNoteBgColor_Click" Tag="#FFFFFF" ToolTip="{Binding [ColorWhiteBg], Source={x:Static svc:Loc.Instance}}" />
+                        <Button Background="Transparent" BorderBrush="#94A3B8" Content="∅" FontSize="10" Foreground="#64748B" Click="BtnNoteBgColor_Click" Tag="Transparent" ToolTip="{Binding [ColorTransparentBg], Source={x:Static svc:Loc.Instance}}" />
+                    </StackPanel>
+
+                    <Button x:Name="BtnDeleteActiveTextBox" Content="🗑️" Style="{StaticResource FluentButtonStyle}" Padding="7,4" Foreground="#DC2626" Click="BtnDeleteActiveTextBox_Click" ToolTip="{Binding [DeleteTextBoxTip], Source={x:Static svc:Loc.Instance}}" />
+                </WrapPanel>
+            </Border>
+        </StackPanel>
+
+        <!-- ================================================================ -->
+        <!-- LAYER 3: MODERN HOME SCREEN OVERLAY                              -->
+        <!-- ================================================================ -->
+        <Grid x:Name="HomeScreenOverlay"
+              Panel.ZIndex="50"
+              Visibility="Collapsed"
+              Background="{DynamicResource DeskBackgroundBrush}">
+            <Grid.RenderTransform>
+                <TranslateTransform x:Name="HomeScreenTranslate" X="0" Y="0" />
+            </Grid.RenderTransform>
+            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel MaxWidth="1060" HorizontalAlignment="Center" Margin="36,30,36,44">
+
+                    <!-- Home Header Bar -->
+                    <Border Style="{StaticResource FloatingIslandStyle}" CornerRadius="20" Padding="24,18" Margin="0,0,0,22">
+                        <DockPanel>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <Border Width="52" Height="52" CornerRadius="14" Background="{DynamicResource SelectionTintBrush}" BorderBrush="{DynamicResource ActiveBorderBrush}" BorderThickness="1" Margin="0,0,16,0" ClipToBounds="True">
+                                    <Image Source="pack://application:,,,/Assets/app_icon.png" Width="40" Height="40" Stretch="Uniform" UseLayoutRounding="True" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="Fant" />
+                                </Border>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock x:Name="LblHomeTitle" Text="Witaj w Quillfolio" FontSize="22" FontWeight="Bold" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                    <TextBlock x:Name="LblHomeSubtitle" Text="Cyfrowy zeszyt z wektorowym atramentem, tabelami i kształtami" FontSize="13" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,2,0,0" />
+                                </StackPanel>
+                            </StackPanel>
+
+                            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                <Button x:Name="BtnHomeOpenCanvas" Content="Otwórz kanwę →" Style="{StaticResource OutlineButtonStyle}" Padding="14,9" Margin="0,0,10,0" FontSize="13" Click="BtnHomeOpenCanvas_Click" />
+                                <Button x:Name="BtnHomeNewNoteTop" Content="+ Nowa notatka" Style="{StaticResource PrimaryButtonStyle}" Padding="16,9" Margin="0,0,10,0" FontSize="13" Click="BtnHomeNewNote_Click" />
+                                <Button x:Name="BtnHomeSettings" Style="{StaticResource OutlineButtonStyle}" Width="38" Height="38" Padding="0" Click="BtnSettings_Click" ToolTip="{Binding [Settings], Source={x:Static svc:Loc.Instance}}">
+                                    <Path Width="16" Height="16" Stretch="Uniform" Fill="{DynamicResource TextPrimaryBrush}" Data="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+                                </Button>
+                            </StackPanel>
+                        </DockPanel>
+                    </Border>
+
+                    <!-- Quick Action Cards Row -->
+                    <UniformGrid Columns="4" Margin="0,0,0,26">
+                        <Button Style="{StaticResource OutlineButtonStyle}" Margin="0,0,10,0" Padding="18,16" HorizontalContentAlignment="Left" Click="BtnHomeNewNote_Click" Cursor="Hand">
+                            <StackPanel>
+                                <Border Width="38" Height="38" CornerRadius="10" Background="{DynamicResource SelectionTintBrush}" HorizontalAlignment="Left" Margin="0,0,0,12">
+                                    <TextBlock Text="✨" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="{Binding [NewNote], Source={x:Static svc:Loc.Instance}}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="{Binding [HomeNewNoteDesc], Source={x:Static svc:Loc.Instance}}" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource OutlineButtonStyle}" Margin="5,0,5,0" Padding="18,16" HorizontalContentAlignment="Left" Click="BtnHomeContinueLast_Click" Cursor="Hand">
+                            <StackPanel>
+                                <Border Width="38" Height="38" CornerRadius="10" Background="{DynamicResource SelectionTintBrush}" HorizontalAlignment="Left" Margin="0,0,0,12">
+                                    <TextBlock Text="📝" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock x:Name="LblHomeContinue" Text="Kontynuuj ostatnią" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock x:Name="LblHomeLastNoteTitle" Text="Ostatnia edytowana" FontSize="11.5" Foreground="{DynamicResource PrimaryBrush}" TextTrimming="CharacterEllipsis" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource OutlineButtonStyle}" Margin="5,0,5,0" Padding="18,16" HorizontalContentAlignment="Left" Click="BtnHomeChooseImage_Click" Cursor="Hand">
+                            <StackPanel>
+                                <Border Width="38" Height="38" CornerRadius="10" Background="{DynamicResource SelectionTintBrush}" HorizontalAlignment="Left" Margin="0,0,0,12">
+                                    <TextBlock Text="🖼️" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="{Binding [HomeInsertImageTitle], Source={x:Static svc:Loc.Instance}}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock Text="{Binding [HomeInsertImageDesc], Source={x:Static svc:Loc.Instance}}" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </Button>
+
+                        <Button Style="{StaticResource OutlineButtonStyle}" Margin="10,0,0,0" Padding="18,16" HorizontalContentAlignment="Left" Click="BtnSettings_Click" Cursor="Hand">
+                            <StackPanel>
+                                <Border Width="38" Height="38" CornerRadius="10" Background="{DynamicResource SelectionTintBrush}" HorizontalAlignment="Left" Margin="0,0,0,12">
+                                    <TextBlock Text="🎨" FontSize="18" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                </Border>
+                                <TextBlock Text="{Binding [HomeThemeSettingsTitle], Source={x:Static svc:Loc.Instance}}" FontWeight="SemiBold" FontSize="14" Foreground="{DynamicResource TextPrimaryBrush}" />
+                                <TextBlock x:Name="LblHomeStats" Text="{Binding [HomeThemesSubtitle], Source={x:Static svc:Loc.Instance}}" FontSize="11.5" Foreground="{DynamicResource TextSecondaryBrush}" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </Button>
+                    </UniformGrid>
+
+                    <!-- Favorite Notes Section -->
+                    <StackPanel x:Name="HomeFavoritesSection" Margin="0,0,0,24">
+                        <TextBlock x:Name="LblHomeFavorites" Text="★ ULUBIONE NOTATKI" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,0,0,10" />
+                        <WrapPanel x:Name="HomeFavoritesPanel" />
+                    </StackPanel>
+
+                    <!-- Recent Notes Section -->
+                    <StackPanel>
+                        <TextBlock x:Name="LblHomeRecent" Text="OSTATNIE NOTATKI" FontSize="11.5" FontWeight="Bold" Foreground="{DynamicResource TextSecondaryBrush}" Margin="2,0,0,10" />
+                        <WrapPanel x:Name="HomeRecentNotesPanel" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <!-- ================================================================ -->
+        <!-- LAYER 4: STARTUP LOADING SCREEN ANIMATION OVERLAY                -->
+        <!-- ================================================================ -->
+        <Grid x:Name="LoadingScreenOverlay"
+              Panel.ZIndex="100"
+              Visibility="Visible"
+              Background="{DynamicResource DeskBackgroundBrush}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <Grid Width="108" Height="108" Margin="0,0,0,20">
+                    <Ellipse Stroke="{DynamicResource BorderBrush}" StrokeThickness="4" />
+                    <Ellipse x:Name="LoadingSpinnerRing"
+                             Stroke="{DynamicResource PrimaryBrush}"
+                             StrokeThickness="4.5"
+                             StrokeDashArray="16 28"
+                             StrokeDashCap="Round"
+                             RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="LoadingSpinnerRotate" Angle="0" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                    <Border Width="76" Height="76" CornerRadius="22" Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" ClipToBounds="True">
+                        <Image Source="pack://application:,,,/Assets/app_icon.png" Width="56" Height="56" Stretch="Uniform" UseLayoutRounding="True" SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="Fant" />
+                    </Border>
+                </Grid>
+
+                <TextBlock Text="Quillfolio"
+                           FontSize="26"
+                           FontWeight="Bold"
+                           HorizontalAlignment="Center"
+                           Foreground="{DynamicResource TextPrimaryBrush}" />
+                <TextBlock Text="{Binding [LoadingPreparing], Source={x:Static svc:Loc.Instance}}"
+                           FontSize="12.5"
+                           HorizontalAlignment="Center"
+                           Foreground="{DynamicResource TextSecondaryBrush}"
+                           Margin="0,6,0,18" />
+
+                <Border Width="210" Height="5" CornerRadius="2.5" Background="{DynamicResource PillTrackBrush}" ClipToBounds="True">
+                    <Border x:Name="LoadingProgressFill"
+                            Width="0"
+                            HorizontalAlignment="Left"
+                            CornerRadius="2.5"
+                            Background="{DynamicResource PrimaryBrush}" />
+                </Border>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
